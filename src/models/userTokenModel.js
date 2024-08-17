@@ -17,16 +17,16 @@ async function saveUserToken(tokenInfo) {
 
     const values = [
         tokenInfo.id,
-        tokenInfo.user_id,
-        tokenInfo.idp_subject_id,
-        tokenInfo.idp_access_token,
-        tokenInfo.idp_access_token_expires_at,
-        tokenInfo.idp_refresh_token,
-        tokenInfo.idp_refresh_token_expires_at,
-        tokenInfo.app_refresh_token,
-        tokenInfo.app_refresh_token_expires_at,
-        tokenInfo.created_at,
-        tokenInfo.updated_at,
+        tokenInfo.userId,
+        tokenInfo.idpSubjectId,
+        tokenInfo.idpAccessToken,
+        tokenInfo.idpAccessTokenExpiresAt,
+        tokenInfo.idpRefreshToken,
+        tokenInfo.idpRefreshTokenExpiresAt,
+        tokenInfo.appRefreshToken,
+        tokenInfo.appRefreshTokenExpiresAt,
+        tokenInfo.createdAt,
+        tokenInfo.updatedAt,
     ];
 
     const result = await db.query(query, values);

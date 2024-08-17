@@ -8,7 +8,7 @@ async function getUserById(id) {
 async function saveUser(user) {
     const result = await db.query(
         "INSERT INTO users (username, email, profile_picture) VALUES ($1, $2, $3) RETURNING *",
-        [user.username, user.email, user.profile_picture]
+        [user.username, user.email, user.profilePicture]
     );
     return result.rows[0];
 }

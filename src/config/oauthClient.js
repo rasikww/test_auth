@@ -1,4 +1,4 @@
-const { Issuer } = require("openid-client");
+const { Issuer, generators } = require("openid-client");
 
 let client;
 
@@ -14,8 +14,13 @@ async function getOAuthClient() {
             redirect_uris: ["http://localhost:3000/auth-callback"],
             response_types: ["code"],
         });
+        // console.log(
+        //     "Discovered issuer %s %O",
+        //     googleIssuer.issuer,
+        //     googleIssuer.metadata
+        // );
     }
     return client;
 }
 
-module.exports = { getOAuthClient };
+module.exports = { getOAuthClient, generators };

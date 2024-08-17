@@ -9,7 +9,7 @@ async function saveAuthState(authStateData) {
     );
 }
 
-async function getAuthState(state) {
+async function getAuthStateByState(state) {
     const result = await db.query("SELECT * FROM auth_state WHERE state = $1", [
         state,
     ]);
@@ -18,5 +18,5 @@ async function getAuthState(state) {
 
 module.exports = {
     saveAuthState,
-    getAuthState,
+    getAuthStateByState,
 };

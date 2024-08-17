@@ -4,7 +4,9 @@ const cookieParser = require("cookie-parser");
 
 const app = express();
 
-//middleware to route to "/api" in webpage
-app.use("/api", routes);
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/", routes);
 
 module.exports = app;

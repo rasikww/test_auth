@@ -1,7 +1,11 @@
 const authService = require("../services/authService");
 
-async function initiateAuth(req, res) {
+function initiateAuth(req, res) {
     authService.initiateAuth(req, res);
 }
 
-module.exports = { initiateAuth };
+function handleAuthCallback(req, res) {
+    authService.handleAuthCallback(req, res);
+}
+
+module.exports = { initiateAuth, handleAuthCallback };

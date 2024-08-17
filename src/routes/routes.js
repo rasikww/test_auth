@@ -6,8 +6,12 @@ router.get("/auth", (req, res) => {
     authController.initiateAuth(req, res);
 });
 
-router.get("/auth-callback", (req, res) => {});
+router.get("/auth-callback", (req, res) => {
+    authController.handleAuthCallback(req, res);
+});
 
-router.get("/token", (req, res) => {});
+router.get("/token", (req, res) => {
+    res.send("welcome");
+});
 
 module.exports = router;

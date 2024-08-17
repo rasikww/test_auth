@@ -1,7 +1,9 @@
 const db = require("../config/db");
 
-async function getUserById(id) {
-    const result = await db.query("SELECT * FROM id = $1", [id]);
+async function getUserByEmail(email) {
+    const result = await db.query("SELECT * FROM users WHERE email = $1", [
+        email,
+    ]);
     return result.rows[0];
 }
 
@@ -14,6 +16,6 @@ async function saveUser(user) {
 }
 
 module.exports = {
-    getUserById,
+    getUserByEmail,
     saveUser,
 };

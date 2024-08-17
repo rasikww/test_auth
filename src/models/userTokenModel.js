@@ -2,8 +2,7 @@ const db = require("../config/db");
 
 async function saveUserToken(tokenInfo) {
     const query = `INSERT INTO user_token 
-    (id, 
-    user_id,
+    (user_id,
     idp_subject_id, 
     idp_access_token, 
     idp_access_token_expires_at, 
@@ -13,10 +12,9 @@ async function saveUserToken(tokenInfo) {
     app_refresh_token_expires_at, 
     created_at, 
     updated_at) 
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) RETURNING *;`;
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) RETURNING *;`;
 
     const values = [
-        tokenInfo.id,
         tokenInfo.userId,
         tokenInfo.idpSubjectId,
         tokenInfo.idpAccessToken,
@@ -25,8 +23,6 @@ async function saveUserToken(tokenInfo) {
         tokenInfo.idpRefreshTokenExpiresAt,
         tokenInfo.appRefreshToken,
         tokenInfo.appRefreshTokenExpiresAt,
-        tokenInfo.createdAt,
-        tokenInfo.updatedAt,
     ];
 
     const result = await db.query(query, values);

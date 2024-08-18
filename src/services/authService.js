@@ -7,14 +7,8 @@ const crypto = require("crypto");
 
 async function initiateAuth(req, res) {
     try {
-        const state = crypto.randomBytes(16).toString("hex");
-        //const codeVerifier = crypto.randomBytes(32).toString("hex");
+        const state = generators.state();
         const codeVerifier = generators.codeVerifier();
-
-        // const codeChallenge = crypto
-        //     .createHash("sha256")
-        //     .update(codeVerifier)
-        //     .digest("base64url");
 
         const codeChallenge = generators.codeChallenge(codeVerifier);
 
@@ -61,9 +55,9 @@ async function handleAuthCallback(req, res) {
             return res.status(400).send("Invalid state parameter");
         }
 
-        const client = await getOAuthClient();
+        const oauthClient = await getOAuthClient();
 
-        const tokenSet = await client.callback(
+        const tokenSet = await oauthClient.callback(
             "http://localhost:3000/auth-callback",
             { code },
             {
@@ -71,9 +65,11 @@ async function handleAuthCallback(req, res) {
             }
         );
 
-        const userInfo = await client.userinfo(tokenSet.access_token);
+        const userInfo = await oauthClient.userinfo(tokenSet.access_token);
 
-        console.log("user info :- " + userInfo);
+        // console.log("user info :- " + JSON.stringify(userInfo));
+        // console.log("auth client info :- " + JSON.stringify(oauthClient));
+        // console.log("token set info :- " + JSON.stringify(tokenSet));
 
         let user = await userModel.getUserByEmail(userInfo.email);
         if (!user) {
@@ -84,10 +80,15 @@ async function handleAuthCallback(req, res) {
             });
         }
 
-        console.log("user :-" + user);
-        console.log(
-            "expire date :-" +
-                new Date(tokenSet.expires_at * 1000).toISOString()
+        // console.log("user :-" + user);
+        // console.log(
+        //     "expire date :-" +
+        //         new Date(tokenSet.expires_at * 1000).toISOString()
+        // );
+
+        const refreshToken = crypto.randomBytes(32).toString("hex");
+        const appRefreshTokenExpiresAt = new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
         );
 
         const tokenInfo = {
@@ -99,8 +100,8 @@ async function handleAuthCallback(req, res) {
             ).toISOString(),
             idpRefreshToken: tokenSet.refresh_token,
             idpRefreshTokenExpiresAt: tokenSet.refresh_token_expires_at,
-            appRefreshToken: crypto.randomBytes(32).toString("hex"),
-            appRefreshTokenExpiresAt: tokenSet.appRefreshTokenExpiresAt,
+            appRefreshToken: refreshToken,
+            appRefreshTokenExpiresAt: appRefreshTokenExpiresAt,
         };
 
         try {
@@ -110,6 +111,12 @@ async function handleAuthCallback(req, res) {
             console.log("error saving token" + error);
         }
 
+        res.cookie("APP_REFRESH_TOKEN", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            expires: appRefreshTokenExpiresAt,
+        });
+
         res.redirect("http://localhost:3000/token");
     } catch (error) {
         console.error("Error handling auth callback:", error);
@@ -117,4 +124,45 @@ async function handleAuthCallback(req, res) {
     }
 }
 
-module.exports = { initiateAuth, handleAuthCallback };
+async function issueJWTToken(req, res) {
+    const refreshToken = req.cookies.APP_REFRESH_TOKEN;
+    if (!refreshToken) {
+        return res.status(401).send("Unauthorized: user not authenticated");
+    }
+    const tokenRecord = await userTokenModel.getUserTokenByAppRefreshToken(
+        refreshToken
+    );
+
+    // refreshToken doesn't exist
+    if (!tokenRecord) {
+        return res.status(401).send("Unauthorized");
+    }
+    //checking refresh token expiration
+    if (Date.now() > Date.parse(tokenRecord.app_refresh_token_expires_at)) {
+        return res.status(401).send("Unauthorized: expired token");
+    }
+    //getting userinfo from db
+    const userInfo = await userModel.getUserById(tokenRecord.user_id);
+    //creating jwt token
+    const secretKey = process.env.JWT_SECRET;
+    console.log("JWT_SECRET:", process.env.JWT_SECRET);
+
+    try {
+        const jwtToken = jwt.sign(
+            {
+                username: userInfo.username,
+                email: userInfo.email,
+                sub: userInfo.id,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "1h" }
+        );
+
+        res.json({ token: jwtToken });
+    } catch (error) {
+        console.error("error occurred while creating jwt token", error);
+        throw new Error("jwt creation error");
+    }
+}
+
+module.exports = { initiateAuth, handleAuthCallback, issueJWTToken };

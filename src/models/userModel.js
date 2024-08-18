@@ -7,6 +7,11 @@ async function getUserByEmail(email) {
     return result.rows[0];
 }
 
+async function getUserById(id) {
+    const result = await db.query("SELECT * FROM users WHERE id = $1", [id]);
+    return result.rows[0];
+}
+
 async function saveUser(user) {
     const result = await db.query(
         "INSERT INTO users (username, email, profile_picture) VALUES ($1, $2, $3) RETURNING *",
@@ -17,5 +22,6 @@ async function saveUser(user) {
 
 module.exports = {
     getUserByEmail,
+    getUserById,
     saveUser,
 };

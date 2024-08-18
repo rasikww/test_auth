@@ -37,7 +37,16 @@ async function getUserTokenByUserId(userId) {
     return result.rows[0];
 }
 
+async function getUserTokenByAppRefreshToken(refreshToken) {
+    const result = await db.query(
+        "SELECT * FROM user_token WHERE app_refresh_token = $1",
+        [refreshToken]
+    );
+    return result.rows[0];
+}
+
 module.exports = {
     saveUserToken,
     getUserTokenByUserId,
+    getUserTokenByAppRefreshToken,
 };

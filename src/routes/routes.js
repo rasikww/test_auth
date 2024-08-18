@@ -11,7 +11,7 @@ router.get("/auth-callback", (req, res) => {
 });
 
 router.get("/token", (req, res) => {
-    res.send("welcome");
+    authController.handleToken(req, res);
 });
 
 module.exports = router;

@@ -137,16 +137,16 @@ async function issueJWTToken(req, res) {
     if (!tokenRecord) {
         return res.status(401).send("Unauthorized");
     }
+
     //checking refresh token expiration
     if (Date.now() > Date.parse(tokenRecord.app_refresh_token_expires_at)) {
         return res.status(401).send("Unauthorized: expired token");
     }
+
     //getting userinfo from db
     const userInfo = await userModel.getUserById(tokenRecord.user_id);
-    //creating jwt token
-    const secretKey = process.env.JWT_SECRET;
-    console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
+    //creating jwt token
     try {
         const jwtToken = jwt.sign(
             {

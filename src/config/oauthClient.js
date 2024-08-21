@@ -8,17 +8,11 @@ async function getOAuthClient() {
             "https://accounts.google.com"
         );
         client = new googleIssuer.Client({
-            client_id:
-                "378283612239-j98t0ukbuj2vl4lkkhu877pgj62e8jg9.apps.googleusercontent.com",
-            client_secret: "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",
+            client_id: process.env.MY_CLIENT_ID,
+            client_secret: process.env.MY_CLIENT_SECRET,
             redirect_uris: ["http://localhost:3000/auth-callback"],
             response_types: ["code"],
         });
-        // console.log(
-        //     "Discovered issuer %s %O",
-        //     googleIssuer.issuer,
-        //     googleIssuer.metadata
-        // );
     }
     return client;
 }

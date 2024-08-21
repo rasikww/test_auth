@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const queryDB = require("../config/db");
 
 async function saveUserToken(tokenInfo) {
     const query = `INSERT INTO user_token 
@@ -25,12 +25,12 @@ async function saveUserToken(tokenInfo) {
         tokenInfo.appRefreshTokenExpiresAt,
     ];
 
-    const result = await db.query(query, values);
+    const result = await queryDB(query, values);
     return result.rows[0];
 }
 
 async function getUserTokenByUserId(userId) {
-    const result = await db.query(
+    const result = await queryDB(
         "SELECT * FROM user_token WHERE user_id = $1",
         [userId]
     );
@@ -38,7 +38,7 @@ async function getUserTokenByUserId(userId) {
 }
 
 async function getUserTokenByAppRefreshToken(refreshToken) {
-    const result = await db.query(
+    const result = await queryDB(
         "SELECT * FROM user_token WHERE app_refresh_token = $1",
         [refreshToken]
     );

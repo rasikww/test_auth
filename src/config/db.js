@@ -1,9 +1,17 @@
-const { Client } = require("pg");
+const { Pool } = require("pg");
 
-const client = new Client({
-    connectionString: "postgresql://postgres:postgre@localhost:5432/auth",
+const pool = new Pool({
+    connectionString: process.env.DB_CONNECTION_STRING,
 });
 
-client.connect();
+async function queryDB(query, params) {
+    const client = await pool.connect();
+    try {
+        const result = await client.query(query, params);
+        return result;
+    } finally {
+        client.release();
+    }
+}
 
-module.exports = client;
+module.exports = queryDB;

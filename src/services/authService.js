@@ -4,6 +4,7 @@ const authStateModel = require("../models/authStateModel");
 const userTokenModel = require("../models/userTokenModel");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const { createToken } = require("./jwtService");
 
 async function initiateAuth(req, res) {
     try {
@@ -86,7 +87,7 @@ async function handleAuthCallback(req, res) {
         //         new Date(tokenSet.expires_at * 1000).toISOString()
         // );
 
-        const refreshToken = crypto.randomBytes(32).toString("hex");
+        const refreshToken = crypto.randomBytes(32).toString("base64");
         const appRefreshTokenExpiresAt = new Date(
             Date.now() + 7 * 24 * 60 * 60 * 1000
         );
@@ -138,7 +139,7 @@ async function issueJWTToken(req, res) {
         return res.status(401).send("Unauthorized");
     }
 
-    //checking refresh token expiration
+    //checking refresh token expiration time
     if (Date.now() > Date.parse(tokenRecord.app_refresh_token_expires_at)) {
         return res.status(401).send("Unauthorized: expired token");
     }
@@ -148,16 +149,7 @@ async function issueJWTToken(req, res) {
 
     //creating jwt token
     try {
-        const jwtToken = jwt.sign(
-            {
-                username: userInfo.username,
-                email: userInfo.email,
-                sub: userInfo.id,
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: "1h" }
-        );
-
+        const jwtToken = createToken(userInfo);
         res.json({ token: jwtToken });
     } catch (error) {
         console.error("error occurred while creating jwt token", error);

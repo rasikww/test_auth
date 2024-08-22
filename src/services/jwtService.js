@@ -22,4 +22,21 @@ function verifyJWT(req, res, next) {
     });
 }
 
-module.exports = verifyJWT;
+async function createToken(userInfo) {
+    const private
+    const jwtToken = jwt.sign(
+        {
+            username: userInfo.username,
+            email: userInfo.email,
+            sub: userInfo.id,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+    );
+    return jwtToken;
+}
+
+module.exports = {
+    verifyJWT,
+    createToken,
+};

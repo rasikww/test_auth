@@ -13,27 +13,23 @@ This project demonstrates implementing OAuth 2.0 Authorization Code Flow with PK
 
 **Clone the Repository:**
 
-Install Dependencies:
-
-bash
+**Install Dependencies:**
 
 npm install
 
-Set Up Environment Variables:
+**Set Up Environment Variables:**
 
 Create a .env file in the root directory with the following content:
-
-env
 
 DB_CONNECTION_STRING="your_database_connection_url_string"
 MY_CLIENT_ID="your_idp(google)\_client_id"
 MY_CLIENT_SECRET="your_idp(google)\_client_secret"
 
-2. Configuration
+## Configuration
 
 Database: Ensure PostgreSQL is running and configured according to your .env file.
 
-Database setup:
+**Database setup:**
 
 Use following table creation queries
 
@@ -80,24 +76,23 @@ is_revoked BOOLEAN DEFAULT FALSE
 
 OAuth 2.0: Update OAuth 2.0 client credentials and redirect URIs as necessary.
 
-3. Usage
+## Usage
 
-Start the Server:
+**Start the Server:**
 
-bash
 while in the directory where package.json file is located run
 node src/server
 
-Access the Application:
+**Access the Application:**
 
 Navigate to http://localhost:3000/auth in your browser.
 you will have to login to your idp(google) account.
 upon successful login you will get a token to use the app.
 Navigate to http://localhost:3000/api/users with providing the token in the header.
 
-4. API Endpoints:
+## API Endpoints:
 
-Use the following endpoints to interact with the API:
+**Use the following endpoints to interact with the API:**
 
 /auth: Initiates OAuth 2.0 authentication flow.
 /auth-callback: Handles OAuth 2.0 callback from the identity provider(Google).

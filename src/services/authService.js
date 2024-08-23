@@ -2,7 +2,6 @@ const { getOAuthClient, generators } = require("../config/oauthClient");
 const userModel = require("../models/userModel");
 const authStateModel = require("../models/authStateModel");
 const userTokenModel = require("../models/userTokenModel");
-const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { createToken } = require("./jwtService");
 
@@ -149,7 +148,7 @@ async function issueJWTToken(req, res) {
 
     //creating jwt token
     try {
-        const jwtToken = createToken(userInfo);
+        const jwtToken = await createToken(userInfo);
         res.json({ token: jwtToken });
     } catch (error) {
         console.error("error occurred while creating jwt token", error);

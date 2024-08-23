@@ -1,8 +1,8 @@
 const queryDB = require("../config/db");
 
-async function getValidSigningKey() {
+async function getValidPrivateKey() {
     const { rows } = await queryDB(
-        `SELECT signing_key 
+        `SELECT private_key 
         FROM signing_key 
         WHERE expires_at > NOW() 
         AND is_revoked = FALSE 
@@ -12,14 +12,27 @@ async function getValidSigningKey() {
     return rows[0];
 }
 
-async function insertSigningKey(privateKey, expiresAt) {
+async function getValidPublicKey() {
+    const { rows } = await queryDB(
+        `SELECT public_key 
+        FROM signing_key 
+        WHERE expires_at > NOW() 
+        AND is_revoked = FALSE 
+        ORDER BY expires_at DESC 
+        LIMIT 1`
+    );
+    return rows[0];
+}
+
+async function insertSigningKey(privateKeyPEM, publicKeyPEM, expiresAt) {
     await queryDB(
-        `INSERT INTO signing_key (signing_key, expires_at) VALUES ($1, $2)`,
-        [privateKey.export({ format: "pem", type: "pkcs1" }), expiresAt]
+        `INSERT INTO signing_key (private_key, public_key, expires_at) VALUES ($1, $2, $3)`,
+        [privateKeyPEM, publicKeyPEM, expiresAt]
     );
 }
 
 module.exports = {
-    getValidSigningKey,
+    getValidPrivateKey,
+    getValidPublicKey,
     insertSigningKey,
 };

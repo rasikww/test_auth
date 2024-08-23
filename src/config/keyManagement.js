@@ -1,18 +1,22 @@
-const jose = require("jose");
 const signingKeyModel = require("../models/signingKeyModel");
+const jose = require("jose");
 
-async function loadOrGenerateKeys() {
-    const existingKey = await signingKeyModel.getValidSigningKey();
+async function GenerateAndStoreKeys() {
+    const { privateKey, publicKey } = await jose.generateKeyPair("RS256");
 
-    if (!existingKey) {
-        const privateKey = await jose.generateKeyPair("RS256");
-        const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + 3);
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 3);
 
-        await signingKeyModel.insertSigningKey(privateKey, expiresAt);
-    }
+    const privateKeyPEM = await jose.exportPKCS8(privateKey);
+    const publicKeyPEM = await jose.exportSPKI(publicKey);
+
+    await signingKeyModel.insertSigningKey(
+        privateKeyPEM,
+        publicKeyPEM,
+        expiresAt
+    );
 }
 
 module.exports = {
-    loadOrGenerateKeys,
+    GenerateAndStoreKeys,
 };

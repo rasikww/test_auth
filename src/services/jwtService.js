@@ -1,39 +1,48 @@
-const jwt = require("jsonwebtoken");
+const jose = require("jose");
+const signingKeyModel = require("../models/signingKeyModel");
 
-function verifyJWT(req, res, next) {
-    const token = req.headers["authorization"];
+async function verifyJWT(req, res, next) {
+    try {
+        const token = req.headers["authorization"];
 
-    if (!token) {
-        return res.status(401).send("Unauthorized: No token provided");
-    }
-
-    const bearerToken = token.split(" ")[1];
-
-    jwt.verify(bearerToken, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res
-                .status(401)
-                .send("Unauthorized: Token Authentication Failed");
+        if (!token) {
+            return res.status(401).send("Unauthorized: No token provided");
         }
 
-        req.userId = decoded.sub; //adding decoded user to request object
-        console.log("decode: ", JSON.stringify(decoded));
+        const bearerToken = token.split(" ")[1];
+
+        const keyRecord = await signingKeyModel.getValidPublicKey();
+        const publicKey = await jose.importSPKI(keyRecord.public_key, "RS256");
+
+        const { payload } = await jose.jwtVerify(bearerToken, publicKey, {
+            algorithms: ["RS256"],
+        });
+        req.userId = payload.sub;
+
         next();
-    });
+    } catch (error) {
+        console.error("JWT Verification Error: ", error);
+        res.status(401).send("Unauthorized: Invalid token");
+    }
 }
 
 async function createToken(userInfo) {
-    const private
-    const jwtToken = jwt.sign(
-        {
-            username: userInfo.username,
-            email: userInfo.email,
-            sub: userInfo.id,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
-    );
-    return jwtToken;
+    const keyRecord = await signingKeyModel.getValidPrivateKey();
+    const privateKey = await jose.importPKCS8(keyRecord.private_key, "RS256");
+
+    const payload = {
+        username: userInfo.username,
+        email: userInfo.email,
+        sub: userInfo.id,
+    };
+
+    const jwt = await new jose.SignJWT(payload)
+        .setProtectedHeader({ alg: "RS256" })
+        .setIssuedAt()
+        .setExpirationTime("1h")
+        .sign(privateKey);
+
+    return jwt;
 }
 
 module.exports = {

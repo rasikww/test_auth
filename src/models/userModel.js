@@ -11,7 +11,7 @@ async function getUserById(id) {
     try {
         await queryDB(`SELECT set_config('app.user_id', '${id}', true)`);
         const result = await queryDB("SELECT * FROM users");
-        return result;
+        return result.rows[0];
     } catch (error) {
         console.error("error setting user_id", error);
     }

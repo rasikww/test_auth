@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
-const verifyJWT = require("../services/authMiddleware");
 const userModel = require("../models/userModel");
+const { verifyJWT } = require("../services/jwtService");
 
 router.get("/auth", (req, res) => {
     authController.initiateAuth(req, res);

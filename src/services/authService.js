@@ -34,6 +34,7 @@ async function initiateAuth(req, res) {
             state: state,
             code_challenge: codeChallenge,
             code_challenge_method: "S256",
+            access_type: "offline", //adding offline access to get idp refresh tokens
         });
 
         res.redirect(authorizationUrl);
@@ -124,7 +125,7 @@ async function handleAuthCallback(req, res) {
     }
 }
 
-async function issueJWTToken(req, res) {
+async function handleToken(req, res) {
     const refreshToken = req.cookies.APP_REFRESH_TOKEN;
     if (!refreshToken) {
         return res.status(401).send("Unauthorized: user not authenticated");
@@ -143,17 +144,59 @@ async function issueJWTToken(req, res) {
         return res.status(401).send("Unauthorized: expired token");
     }
 
-    //getting userinfo from db
-    const userInfo = await userModel.getUserById(tokenRecord.user_id);
+    //checking idp access token expiration time
+    if (Date.now() > Date.parse(tokenRecord.idp_access_token_expires_at)) {
+        //idp access token is expired
+        if (tokenRecord.idp_refresh_token) {
+            //idp refresh token is available
+            const oauthClient = await getOAuthClient();
+            try {
+                const newTokenSet = await oauthClient.refresh(
+                    tokenRecord.idp_refresh_token
+                );
 
-    //creating jwt token
-    try {
-        const jwtToken = await createToken(userInfo);
-        res.json({ token: jwtToken });
-    } catch (error) {
-        console.error("error occurred while creating jwt token", error);
-        throw new Error("jwt creation error");
+                if (!newTokenSet) {
+                    return res.status(401).send("Failed to refresh IDP token");
+                }
+
+                const newTokenRecord =
+                    await userTokenModel.updateIDPAccessToken(
+                        tokenRecord.user_id,
+                        newTokenSet
+                    );
+
+                // console.log(
+                //     `issuing at idp access token expired and refresh token is available`
+                // );
+                await issueJWTToken(newTokenRecord.user_id); //issuing token to frontend
+            } catch (error) {
+                console.error("Error refreshing IDP token:", error);
+                return res
+                    .status(401)
+                    .send("IDP refresh token is invalid or revoked");
+            }
+        } else {
+            return res
+                .status(401)
+                .send("Unauthorized: IDP refresh token is not available");
+        }
+    } else {
+        //idp access token not expired
+        // console.log(`issuing at idp access token not expired`);
+        await issueJWTToken(tokenRecord.user_id);
+    }
+
+    //function to create and issue jwt token
+    async function issueJWTToken(userId) {
+        const userInfo = await userModel.getUserById(userId);
+        try {
+            const jwtToken = await createToken(userInfo);
+            res.json({ token: jwtToken });
+        } catch (error) {
+            console.error("error occurred while creating jwt token", error);
+            throw new Error("jwt creation error");
+        }
     }
 }
 
-module.exports = { initiateAuth, handleAuthCallback, issueJWTToken };
+module.exports = { initiateAuth, handleAuthCallback, handleToken };

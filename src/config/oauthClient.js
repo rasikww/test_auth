@@ -10,7 +10,7 @@ async function getOAuthClient() {
         client = new googleIssuer.Client({
             client_id: process.env.MY_CLIENT_ID,
             client_secret: process.env.MY_CLIENT_SECRET,
-            redirect_uris: ["http://localhost:3000/auth-callback"],
+            redirect_uris: [process.env.AUTH_CALLBACK_URL],
             response_types: ["code"],
         });
     }

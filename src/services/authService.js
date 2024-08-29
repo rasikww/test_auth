@@ -9,12 +9,12 @@ async function initiateAuth(req, res) {
     try {
         const state = generators.state();
         const codeVerifier = generators.codeVerifier();
-
         const codeChallenge = generators.codeChallenge(codeVerifier);
+        const nonce = generators.nonce();
 
         const authStateData = {
             state,
-            nonce: state,
+            nonce: nonce,
             codeChallenge: codeChallenge,
             originUrl: req.originalUrl,
         };
@@ -29,12 +29,13 @@ async function initiateAuth(req, res) {
         const oathClient = await getOAuthClient();
 
         const authorizationUrl = oathClient.authorizationUrl({
-            redirect_uri: "http://localhost:3000/auth-callback",
+            redirect_uri: process.env.AUTH_CALLBACK_URL,
             scope: "openid profile email",
             state: state,
             code_challenge: codeChallenge,
             code_challenge_method: "S256",
             access_type: "offline", //adding offline access to get idp refresh tokens
+            nonce,
         });
 
         res.redirect(authorizationUrl);
@@ -59,18 +60,15 @@ async function handleAuthCallback(req, res) {
         const oauthClient = await getOAuthClient();
 
         const tokenSet = await oauthClient.callback(
-            "http://localhost:3000/auth-callback",
+            process.env.AUTH_CALLBACK_URL,
             { code },
             {
                 code_verifier: req.cookies.code_verifier,
+                nonce: authState.nonce,
             }
         );
 
         const userInfo = await oauthClient.userinfo(tokenSet.access_token);
-
-        // console.log("user info :- " + JSON.stringify(userInfo));
-        // console.log("auth client info :- " + JSON.stringify(oauthClient));
-        // console.log("token set info :- " + JSON.stringify(tokenSet));
 
         let user = await userModel.getUserByEmail(userInfo.email);
         if (!user) {
@@ -80,12 +78,6 @@ async function handleAuthCallback(req, res) {
                 profilePicture: userInfo.picture,
             });
         }
-
-        // console.log("user :-" + user);
-        // console.log(
-        //     "expire date :-" +
-        //         new Date(tokenSet.expires_at * 1000).toISOString()
-        // );
 
         const refreshToken = crypto.randomBytes(32).toString("base64");
         const appRefreshTokenExpiresAt = new Date(
@@ -107,9 +99,8 @@ async function handleAuthCallback(req, res) {
 
         try {
             await userTokenModel.saveUserToken(tokenInfo);
-            console.log("user token saved successfully");
         } catch (error) {
-            console.log("error saving token" + error);
+            console.error("error saving token: ", error);
         }
 
         res.cookie("APP_REFRESH_TOKEN", refreshToken, {
@@ -118,7 +109,7 @@ async function handleAuthCallback(req, res) {
             expires: appRefreshTokenExpiresAt,
         });
 
-        res.redirect("http://localhost:3000/token");
+        res.redirect(process.env.TOKEN_URL);
     } catch (error) {
         console.error("Error handling auth callback:", error);
         res.status(500).send("Internal Server Error");
@@ -165,9 +156,6 @@ async function handleToken(req, res) {
                         newTokenSet
                     );
 
-                // console.log(
-                //     `issuing at idp access token expired and refresh token is available`
-                // );
                 await issueJWTToken(newTokenRecord.user_id); //issuing token to frontend
             } catch (error) {
                 console.error("Error refreshing IDP token:", error);
@@ -182,7 +170,6 @@ async function handleToken(req, res) {
         }
     } else {
         //idp access token not expired
-        // console.log(`issuing at idp access token not expired`);
         await issueJWTToken(tokenRecord.user_id);
     }
 

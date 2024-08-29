@@ -19,13 +19,9 @@ npm install
 
 **Set Up Environment Variables:**
 
-Create a .env file in the root directory with the following content:
+Edit the .env.template file in the root directory with relevant content of your project.
 
-```env
-DB_CONNECTION_STRING="your_database_connection_url_string"
-MY_CLIENT_ID="your_idp(google)\_client_id"
-MY_CLIENT_SECRET="your_idp(google)\_client_secret"
-```
+Remember to change the file name to **.env** instead of **.env.template**.
 
 ## Configuration
 

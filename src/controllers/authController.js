@@ -9,7 +9,7 @@ function handleAuthCallback(req, res) {
 }
 
 function handleToken(req, res) {
-    authService.issueJWTToken(req, res);
+    authService.handleToken(req, res);
 }
 
 module.exports = { initiateAuth, handleAuthCallback, handleToken };

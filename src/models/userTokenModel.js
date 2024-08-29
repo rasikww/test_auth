@@ -45,8 +45,23 @@ async function getUserTokenByAppRefreshToken(refreshToken) {
     return result.rows[0];
 }
 
+async function updateIDPAccessToken(userId, tokenSet) {
+    const result = await queryDB(
+        `UPDATE user_token 
+        SET idp_access_token = $1, idp_access_token_expires_at = $2 
+        WHERE user_id = $3 RETURNING *;`,
+        [
+            tokenSet.access_token,
+            new Date(tokenSet.expires_at * 1000).toISOString(),
+            userId,
+        ]
+    );
+    return result.rows[0];
+}
+
 module.exports = {
     saveUserToken,
     getUserTokenByUserId,
     getUserTokenByAppRefreshToken,
+    updateIDPAccessToken,
 };
